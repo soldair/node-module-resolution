@@ -1,0 +1,43 @@
+{
+  "name": "node-module-resolution",
+  "version": "1.0.0",
+  "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soldair/node-module-resolution.git"
+  },
+  "keywords": [
+    "module",
+    "package",
+    "resolver"
+  ],
+  "author": "Ryan Day <ryaneday@google.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/soldair/node-module-resolution/issues"
+  },
+  "homepage": "https://github.com/soldair/node-module-resolution#readme",
+  "devDependencies": {
+    "@types/node": "^10.11.2",
+    "gts": "^0.8.0",
+    "mocha": "^5.2.0",
+    "typescript": "^3.1.1"
+  },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "build/src",
+    "!build/src/**/*.map"
+  ]
+}
