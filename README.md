@@ -1,6 +1,27 @@
 # node-module-resolution
-Use to make your own module loaders. A compliant node module loader base without any fs.
+Use to make your own amazing module loaders.
 
+Implements the "spec" defined in the [node docs](https://nodejs.org/dist/latest-v10.x/docs/api/modules.html#modules_all_together)
 
+```typescript
+import {NodeModuleResolution} from 'node-module-resolution'
 
-This is not an offical google product.
+const files = new Map([
+    ['/node_modules/a-module/package.json',{getData:()=>Buffer.from('{"main":"seahorse.js"}')}],
+    ['/node_modules/a-module/seahorse.js',{getData:()=>Buffer.from("console.log('javascript')")}]
+])
+
+let nmr = new NodeModuleResolution(files)
+let result = nmr.resolve('a-module',{id:'/a.js',filename:'/a.js',paths:[]})
+
+console.log('should resolve seahorse by reading main. ',result)
+```
+## todo
+
+- make amazing test suite for this.
+- examples
+- everything else
+
+## notes
+
+This is not an official google product.

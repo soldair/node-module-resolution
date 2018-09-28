@@ -24,7 +24,7 @@ export class NodeModuleResolution {
     mainCache:Map<string,string|boolean>;
     extensions:string[];
     pathRoot: string;
-    
+
     constructor(fileMap:FileMap,pathRoot:string = '/'){
         // the thing we "read" files from. we only need to read "package.json"s in this class
         this.fileMap = fileMap
@@ -39,9 +39,11 @@ export class NodeModuleResolution {
         this.pathRoot = pathRoot;
     }
 
-    resolve(request: string,parent?:{id:string,paths:string[]}):string|boolean{
-        // main is never going to be in the zip.
-        if(!parent) return false;
+    resolve(request: string,parent?:Parent):string|boolean{
+        if(!parent) {
+            // make fake parent!.
+            parent = {id:'main',paths:Module._nodeModulePaths(process.cwd())}
+        }
 
         // _resolveFileName calls _findPath which caches items with all of their search paths.
         // we dont search outside of the zip here and parent id should be enough.
@@ -159,5 +161,11 @@ export const gentleJson = (s:string) => {
 export type FileMap = Map<string,FileObject>
 
 export interface FileObject {
-    getData:()=>Buffer   
+    getData:()=>Buffer
+}
+
+export interface Parent {
+    id:string;
+    filename?:string;
+    paths:string[]
 }

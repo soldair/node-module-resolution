@@ -1,8 +1,8 @@
 {
   "name": "node-module-resolution",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
-  "main": "index.js",
+  "main": "build/src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "check": "gts check",
