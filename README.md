@@ -12,7 +12,7 @@ const files = new Map([
 ])
 
 let nmr = new NodeModuleResolution(files)
-let result = nmr.resolve('a-module',{id:'/a.js',filename:'/a.js',paths:[]})
+let result = nmr.resolve('a-module')
 
 console.log('should resolve seahorse by reading main. ',result)
 ```
