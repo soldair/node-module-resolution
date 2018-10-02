@@ -148,11 +148,13 @@ export const isRelative = (filename: string) => {
   const second = filename.charAt(1);
   const third = filename.charAt(2);
   if (first === DOT &&
-      ((second === DOT && third === F_SLASH) || second === F_SLASH))
+      ((second === DOT && third === F_SLASH) || second === F_SLASH)) {
     return true;
+  }
   if (first === DOT &&
-      ((second === DOT && third === B_SLASH) || second === B_SLASH))
+      ((second === DOT && third === B_SLASH) || second === B_SLASH)) {
     return true;
+  }
   return false;
 };
 
