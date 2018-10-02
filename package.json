@@ -4,7 +4,7 @@
   "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
   "main": "build/src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test/run.js",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",

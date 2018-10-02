@@ -13,14 +13,20 @@
 // limitations under the License.
 
 // readme example
-import {NodeModuleResolution} from './'
+import {NodeModuleResolution} from './';
 
 const files = new Map([
-    ['/node_modules/a-module/package.json',{getData:()=>Buffer.from('{"main":"seahorse.js"}')}],
-    ['/node_modules/a-module/seahorse.js',{getData:()=>Buffer.from("console.log('javascript')")}]
-])
+  [
+    '/node_modules/a-module/package.json',
+    {getData: () => Buffer.from('{"main":"seahorse.js"}')}
+  ],
+  [
+    '/node_modules/a-module/seahorse.js',
+    {getData: () => Buffer.from('console.log(\'javascript\')')}
+  ]
+]);
 
-let nmr = new NodeModuleResolution(files)
-let result = nmr.resolve('a-module');
+const nmr = new NodeModuleResolution(files);
+const result = nmr.resolve('a-module');
 
-console.log('should resolve seahorse by reading main. ',result)
+console.log('should resolve seahorse by reading main. ', result);

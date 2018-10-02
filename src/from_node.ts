@@ -25,24 +25,26 @@
  * because the buffer-to-string conversion in `fs.readFileSync()`
  * translates it to FEFF, the UTF-16 BOM.
  */
-export const stripBOM = (content:string) => {
-    if (content.charCodeAt(0) === 0xFEFF) {
-      content = content.slice(1);
-    }
-    return content;
-}
+export const stripBOM = (content: string) => {
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  return content;
+};
 
-export const updateChildren = (parent:ParentModule, child:{}, scan:boolean) => {
-    var children = parent && parent.children;
-    if (children && !(scan && children.includes(child)))
-      children.push(child);
-}
+export const updateChildren =
+    (parent: ParentModule, child: {}, scan: boolean) => {
+      const children = parent && parent.children;
+      if (children && !(scan && children.includes(child))) {
+        children.push(child);
+      }
+    };
 
 //
 // code below here is not from the node project
 //
 export interface ParentModule {
-  id:string;
-  children:{}[];
-  paths:string[];
+  id: string;
+  children: Array<{}>;
+  paths: string[];
 }
