@@ -75,17 +75,19 @@ export class NodeModuleResolution {
 
   loadAsFile(file: string, exactMatch = true) {
     const map = this.fileMap;
-    if (exactMatch && map.has(file)) return file;
+    if (exactMatch && map.has(file)) {
+      return this.tryRealpath(file);
+    }
     for (let i = 0; i < this.extensions.length; ++i) {
       const ext = this.extensions[i] || '';
       if (map.has(file + ext)) {
-        let retPath = file + ext;
-        const fileObj = map.get(retPath);
-        // todo preserveSymlinks
-        if (fileObj && fileObj.realpath) {
-          retPath = fileObj.realpath(retPath);
+        const retPath = this.tryRealpath(file + ext);
+        // this should never return false if map.has the key but we'll reserve
+        // the decision for the implementor. this goes back to the question
+        // about if i should support a realpath that doesn't throw.
+        if (retPath) {
+          return retPath;
         }
-        return retPath;
       }
     }
     return false;
@@ -97,32 +99,12 @@ export class NodeModuleResolution {
     const map = this.fileMap;
     file = path.join(file, 'index');
     return this.loadAsFile(file, false);
-    /*
-    for (let i = 0; i < this.extensions.length; ++i) {
-      if (map.has(file + this.extensions[i])) {
-          let retPath = file + this.extensions[i];
-          let fileObj = map.get(retPath)
-          // todo preserveSymlinks
-          if(fileObj && fileObj.realpath) {
-              retPath = fileObj.realpath(retPath)
-          }
-          return retPath
-      }
-    }
-    return false;
-    */
   }
 
   loadAsDirectory(requestPath: string) {
-    const dirEntry = this.fileMap.get(requestPath);
-    if (dirEntry) {
-      if (dirEntry.realpath) {
-        const resolvedPath = dirEntry.realpath(requestPath);
-        // TODO:  if it has a realpath function it must return a string or
-        // throw?
-        if (resolvedPath) requestPath = resolvedPath;
-      }
-    }
+    // if this directory exists lets make sure we've found its realpath.
+    const resolvedPath = this.tryRealpath(requestPath);
+    if (resolvedPath) requestPath = resolvedPath;
 
     const jsonPath = path.join(requestPath, 'package.json');
 
@@ -156,8 +138,22 @@ export class NodeModuleResolution {
     return asIndex;
   }
 
+  tryRealpath(requestPath: string) {
+    const entry = this.fileMap.get(requestPath);
+    if (entry) {
+      if (entry.realpath) {
+        const resolvedPath = entry.realpath(requestPath);
+        // TODO: decide if it has a realpath function it must return a string or
+        // throw?
+        if (resolvedPath) requestPath = resolvedPath;
+      }
+      return requestPath;
+    }
+    return false;
+  }
+
   loadNodeModules(name: string, dir: string) {
-    const paths = Module._nodeModulePaths(dir);
+    const paths = NodeModuleResolution.nodeModulePaths(dir);
     for (let i = 0; i < paths.length; ++i) {
       // only scan for files under pathRoot
       if (paths[i].indexOf(this.pathRoot) !== 0) {
@@ -173,31 +169,10 @@ export class NodeModuleResolution {
     }
     return false;
   }
-  /*
-  resolveFileObjectLinks(fileName: string, file?: FileObject):
-      FileObjectNotLinked|undefined {
-    const seen = new Set();
-    while (file && file.link) {
-      const link = path.resolve(fileName, file.link);
-      // circular link.
-      if (seen.has(link)) return;
-      seen.add(link);
-      file = this.fileMap.get(link);
-      fileName = link
-    }
-    if (file) {
-      return file as FileObjectNotLinked;
-    }
-    return;
-  }
 
-  realpath(){
-
-  }
-  */
-
-  static nodeModulePaths() {
+  static nodeModulePaths(dir: string) {
     // todo
+    return Module._nodeModulePaths(dir);
   }
 }
 
@@ -229,8 +204,10 @@ export const gentleJson = (s?: string|Buffer) => {
   }
 };
 
-
-export type FileMap = Map<string, FileObject>;
+export interface FileMap {
+  has(file: string): boolean;
+  get(file: string): FileObject|undefined;
+}
 
 export interface FileObjectNotLinked {
   getData: () => Buffer;
@@ -238,7 +215,7 @@ export interface FileObjectNotLinked {
 
 export interface FileObject {
   getData: () => Buffer | undefined;
-  realpath?: (filename: string) =>
+  realpath?: (filename?: string) =>
       string;  // todo. think about taking path argument is good.
 }
 
