@@ -16,6 +16,7 @@ let result = nmr.resolve('a-module')
 
 console.log('should resolve seahorse by reading main. ',result)
 ```
+
 ## todo
 
 - make amazing test suite for this.

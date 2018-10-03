@@ -4,7 +4,7 @@
   "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
   "main": "build/src/index.js",
   "scripts": {
-    "test": "node integration/run.js",
+    "test": "nyc -x 'build/test/*' mocha build/test && node integration/run.js",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",
@@ -29,9 +29,11 @@
   },
   "homepage": "https://github.com/soldair/node-module-resolution#readme",
   "devDependencies": {
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.2",
     "gts": "^0.8.0",
     "mocha": "^5.2.0",
+    "nyc": "^13.0.1",
     "typescript": "^3.1.1"
   },
   "files": [

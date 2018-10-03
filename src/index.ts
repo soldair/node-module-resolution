@@ -46,9 +46,10 @@ export class NodeModuleResolution {
       parent = {id: 'main', paths: Module._nodeModulePaths(process.cwd())};
     }
 
-    // _resolveFileName calls _findPath which caches items with all of their
-    // search paths. we dont search outside of the zip here and parent id should
-    // be enough.
+    // todo: _resolveFileName calls _findPath which caches items with all of
+    // their
+    // search paths.
+
     const cacheKey = request + '\0' + parent.id;
     if (this.pathCache.has(cacheKey)) {
       return this.pathCache.get(cacheKey) || false;
@@ -59,6 +60,7 @@ export class NodeModuleResolution {
       const file = path.resolve(path.dirname(parent.id), request);
       resolved = this.loadAsFile(file);
       if (!resolved) resolved = this.loadAsDirectory(file);
+
     } else {
       resolved = this.loadNodeModules(request, path.dirname(parent.id));
     }
@@ -71,11 +73,20 @@ export class NodeModuleResolution {
     return resolved;
   }
 
-  loadAsFile(file: string) {
+  loadAsFile(file: string, exactMatch = true) {
     const map = this.fileMap;
-    if (map.has(file)) return file;
+    if (exactMatch && map.has(file)) return file;
     for (let i = 0; i < this.extensions.length; ++i) {
-      if (map.has(file + this.extensions[i])) return file + this.extensions[i];
+      const ext = this.extensions[i] || '';
+      if (map.has(file + ext)) {
+        let retPath = file + ext;
+        const fileObj = map.get(retPath);
+        // todo preserveSymlinks
+        if (fileObj && fileObj.realpath) {
+          retPath = fileObj.realpath(retPath);
+        }
+        return retPath;
+      }
     }
     return false;
   }
@@ -85,23 +96,47 @@ export class NodeModuleResolution {
   loadAsIndex(file: string) {
     const map = this.fileMap;
     file = path.join(file, 'index');
+    return this.loadAsFile(file, false);
+    /*
     for (let i = 0; i < this.extensions.length; ++i) {
-      if (map.has(file + this.extensions[i])) return file + this.extensions[i];
+      if (map.has(file + this.extensions[i])) {
+          let retPath = file + this.extensions[i];
+          let fileObj = map.get(retPath)
+          // todo preserveSymlinks
+          if(fileObj && fileObj.realpath) {
+              retPath = fileObj.realpath(retPath)
+          }
+          return retPath
+      }
     }
     return false;
+    */
   }
 
   loadAsDirectory(requestPath: string) {
+    const dirEntry = this.fileMap.get(requestPath);
+    if (dirEntry) {
+      if (dirEntry.realpath) {
+        const resolvedPath = dirEntry.realpath(requestPath);
+        // TODO:  if it has a realpath function it must return a string or
+        // throw?
+        if (resolvedPath) requestPath = resolvedPath;
+      }
+    }
+
     const jsonPath = path.join(requestPath, 'package.json');
 
     if (this.mainCache.has(jsonPath)) {
       return this.mainCache.get(jsonPath) as string;
     }
 
+    // if package.json is a link its ignored completely.
+    // this is why we dont want to resolve realpath
+    // TODO: is this true with preserveSymlinks?
     const packageJson = this.fileMap.get(jsonPath);
-    if (packageJson) {
-      const parsed = gentleJson(packageJson.getData().toString('utf8'));
 
+    if (packageJson) {
+      const parsed = gentleJson(packageJson.getData());
       if (parsed && parsed.main) {
         // yes the main can really be outside the project
         const mainPath = path.resolve(requestPath, parsed.main);
@@ -130,12 +165,39 @@ export class NodeModuleResolution {
       }
 
       const file = path.join(paths[i], name);
+      // support single file modules.
       let retPath = this.loadAsFile(file);
       if (retPath) return retPath;
       retPath = this.loadAsDirectory(file);
       if (retPath) return retPath;
     }
     return false;
+  }
+  /*
+  resolveFileObjectLinks(fileName: string, file?: FileObject):
+      FileObjectNotLinked|undefined {
+    const seen = new Set();
+    while (file && file.link) {
+      const link = path.resolve(fileName, file.link);
+      // circular link.
+      if (seen.has(link)) return;
+      seen.add(link);
+      file = this.fileMap.get(link);
+      fileName = link
+    }
+    if (file) {
+      return file as FileObjectNotLinked;
+    }
+    return;
+  }
+
+  realpath(){
+
+  }
+  */
+
+  static nodeModulePaths() {
+    // todo
   }
 }
 
@@ -158,7 +220,9 @@ export const isRelative = (filename: string) => {
   return false;
 };
 
-export const gentleJson = (s: string) => {
+export const gentleJson = (s?: string|Buffer) => {
+  if (!s) return;
+  if (Buffer.isBuffer(s)) s = s.toString();
   try {
     return JSON.parse(s);
   } catch (e) {
@@ -168,8 +232,14 @@ export const gentleJson = (s: string) => {
 
 export type FileMap = Map<string, FileObject>;
 
-export interface FileObject {
+export interface FileObjectNotLinked {
   getData: () => Buffer;
+}
+
+export interface FileObject {
+  getData: () => Buffer | undefined;
+  realpath?: (filename: string) =>
+      string;  // todo. think about taking path argument is good.
 }
 
 export interface Parent {
