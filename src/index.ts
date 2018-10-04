@@ -22,9 +22,9 @@ export class NodeModuleResolution {
   pathCache: Map<string, string>;
   mainCache: Map<string, string|boolean>;
   extensions: string[];
-  pathRoot: string;
+  // pathRoot: string;
 
-  constructor(fileMap: FileMap, pathRoot = '/') {
+  constructor(fileMap: FileMap) {
     // the thing we "read" files from. we only need to read "package.json"s in
     // this class
     this.fileMap = fileMap;
@@ -37,13 +37,13 @@ export class NodeModuleResolution {
     // we'll only process these extensions and no extension at all.
     this.extensions = Object.keys(Module._extensions);
     // never resolve paths outside of this root.
-    this.pathRoot = pathRoot;
+    // this.pathRoot = pathRoot;
   }
 
   resolve(request: string, parent?: Parent): string|boolean {
     if (!parent) {
       // make fake parent!.
-      parent = {id: 'main', paths: Module._nodeModulePaths(process.cwd())};
+      parent = {id: '.', paths: Module._nodeModulePaths(process.cwd())};
     }
 
     // todo: _resolveFileName calls _findPath which caches items with all of
@@ -156,9 +156,9 @@ export class NodeModuleResolution {
     const paths = NodeModuleResolution.nodeModulePaths(dir);
     for (let i = 0; i < paths.length; ++i) {
       // only scan for files under pathRoot
-      if (paths[i].indexOf(this.pathRoot) !== 0) {
-        break;
-      }
+      // if (paths[i].indexOf(this.pathRoot) !== 0) {
+      //  break;
+      //}
 
       const file = path.join(paths[i], name);
       // support single file modules.
