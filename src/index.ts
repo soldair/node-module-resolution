@@ -153,6 +153,7 @@ export class NodeModuleResolution {
   }
 
   loadNodeModules(name: string, dir: string) {
+
     const paths = NodeModuleResolution.nodeModulePaths(dir);
     for (let i = 0; i < paths.length; ++i) {
       // only scan for files under pathRoot
