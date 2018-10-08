@@ -24,7 +24,7 @@ export class NodeModuleResolution {
   extensions: string[];
   // pathRoot: string;
 
-  constructor(fileMap: FileMap) {
+  constructor(fileMap: FileMap, options?:NodeModuleResolutionOptions) {
     // the thing we "read" files from. we only need to read "package.json"s in
     // this class
     this.fileMap = fileMap;
@@ -40,7 +40,7 @@ export class NodeModuleResolution {
     // this.pathRoot = pathRoot;
   }
 
-  resolve(request: string, parent?: Parent): string|boolean {
+  resolve(request: string, parent?: Parent,isMain?:boolean): string|false {
     if (!parent) {
       // make fake parent!.
       parent = {id: '.', paths: Module._nodeModulePaths(process.cwd())};
@@ -223,4 +223,11 @@ export interface Parent {
   id: string;
   filename?: string;
   paths: string[];
+  children?: Parent[];
+  loaded?:boolean;
+}
+
+export interface NodeModuleResolutionOptions{
+  preserveSymlinks?:boolean;
+  preserveSymLinksMain?:boolean;
 }

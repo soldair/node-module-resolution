@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 
-import {FileObject, NodeModuleResolution} from '../';
+import {FileObject, NodeModuleResolution, Parent} from '../';
+
+import * as extendModule from '../extend-internal-module';
 
 // a drop in replacement for nodes existing built in cjs loader.
 
@@ -31,3 +33,14 @@ class File implements FileObject {
 }
 
 const nmr = new NodeModuleResolution(fsLookup);
+
+extendModule.register({
+  resolve:(request,parent,isMain)=>{
+    return nmr.resolve(request,parent,isMain)
+  },
+  compile:(module:Parent,filename:string,extension:string)=>{
+    // call built in Module._extensions
+    extendModule.callGlobalExtensionHandler(module,filename,extension)
+  }
+})
+

@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import {FileObject, NodeModuleResolution,isRelative} from '../src/index';
+import {FileObject, isRelative, NodeModuleResolution} from '../src/index';
 
 describe('node-module-resolution', () => {
   it('resolves path from files map', () => {
@@ -172,14 +172,14 @@ describe(
           });*/
     });
 
-describe("utilities",()=>{
-  it('find relative paths',()=>{
-    assert.ok(isRelative('./'))
-    assert.ok(isRelative('../'))
-    assert.ok(isRelative('.\\'))
-    assert.ok(isRelative('..\\'))
-  })
-})
+describe('utilities', () => {
+  it('find relative paths', () => {
+    assert.ok(isRelative('./'));
+    assert.ok(isRelative('../'));
+    assert.ok(isRelative('.\\'));
+    assert.ok(isRelative('..\\'));
+  });
+});
 
 const file = (path: string, content?: string, realpath?: string): [
   string, FileObject
