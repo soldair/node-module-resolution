@@ -8,7 +8,13 @@ import * as extendModule from '../extend-internal-module';
 
 const fsLookup = {
   has: (file: string): boolean => {
-    return fs.lstatSync(file) && true || false;
+    let stat;
+    try {
+      // TODO: traverse links? or is the realpath bit enough \/
+      stat = fs.lstatSync(file);
+    } catch (e) {
+    }
+    return stat ? stat.isFile() : false;
   },
   get: (file: string): FileObject | undefined => {
     if (!fs.existsSync(file)) return undefined;
@@ -35,12 +41,11 @@ class File implements FileObject {
 const nmr = new NodeModuleResolution(fsLookup);
 
 extendModule.register({
-  resolve:(request,parent,isMain)=>{
-    return nmr.resolve(request,parent,isMain)
+  resolve: (request, parent, isMain) => {
+    return nmr.resolve(request, parent, isMain);
   },
-  compile:(module:Parent,filename:string,extension:string)=>{
+  compile: (module: Parent, filename: string, extension: string) => {
     // call built in Module._extensions
-    extendModule.callGlobalExtensionHandler(module,filename,extension)
+    extendModule.callGlobalExtensionHandler(module, filename, extension);
   }
-})
-
+});

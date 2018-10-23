@@ -24,7 +24,7 @@ export class NodeModuleResolution {
   extensions: string[];
   // pathRoot: string;
 
-  constructor(fileMap: FileMap, options?:NodeModuleResolutionOptions) {
+  constructor(fileMap: FileMap, options?: NodeModuleResolutionOptions) {
     // the thing we "read" files from. we only need to read "package.json"s in
     // this class
     this.fileMap = fileMap;
@@ -40,7 +40,7 @@ export class NodeModuleResolution {
     // this.pathRoot = pathRoot;
   }
 
-  resolve(request: string, parent?: Parent,isMain?:boolean): string|false {
+  resolve(request: string, parent?: Parent, isMain?: boolean): string|false {
     if (!parent) {
       // make fake parent!.
       parent = {id: '.', paths: Module._nodeModulePaths(process.cwd())};
@@ -55,7 +55,7 @@ export class NodeModuleResolution {
       return this.pathCache.get(cacheKey) || false;
     }
 
-    let resolved;
+    let resolved: string|false = false;
     if (path.isAbsolute(request) || isRelative(request)) {
       const file = path.resolve(path.dirname(parent.id), request);
       resolved = this.loadAsFile(file);
@@ -224,10 +224,10 @@ export interface Parent {
   filename?: string;
   paths: string[];
   children?: Parent[];
-  loaded?:boolean;
+  loaded?: boolean;
 }
 
-export interface NodeModuleResolutionOptions{
-  preserveSymlinks?:boolean;
-  preserveSymLinksMain?:boolean;
+export interface NodeModuleResolutionOptions {
+  preserveSymlinks?: boolean;
+  preserveSymLinksMain?: boolean;
 }

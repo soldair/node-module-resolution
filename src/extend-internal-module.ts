@@ -19,87 +19,101 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// mostly copied from https://github.com/nodejs/node lib/internal/modules/cjs/loader.js
-// modified to expose the minimal global loader hook api.
-import {Parent} from './index'
-import * as path from 'path'
+// mostly copied from https://github.com/nodejs/node
+// lib/internal/modules/cjs/loader.js modified to expose the minimal global
+// loader hook api.
+import * as path from 'path';
 import * as util from 'util';
 
-//tslint:disable-next-line
+import {Parent} from './index';
+
+// tslint:disable-next-line
 const Module = require('module')
-const {NativeModule } = require('internal/bootstrap/loaders');
+// const {NativeModule } = require('internal/bootstrap/loaders');
 const debug = util.debuglog('nmr-extend');
 
-const EXTENDED_MODULE_LOADERS = Symbol.for('node-module-resolution-loaders')
+const EXTENDED_MODULE_LOADERS = Symbol.for('node-module-resolution-loaders');
 
-const originalLoad = Module._load
-const loaders:Set<Loader> = new Set()
+const originalLoad = Module._load;
+const loaders: Set<Loader> = new Set();
+
+
+const builtInModules =
+    new Map(Module.builtinModules.map((s: string) => [s, 1]));
 
 
 // add a new loader.
-export const register = (loader:Loader)=>{
-  if(loaders.has(loader)){
-    throw new Error('double registration. not sure if this is helpful or it should be ignored')
+export const register = (loader: Loader) => {
+  if (loaders.has(loader)) {
+    throw new Error(
+        'double registration. not sure if this is helpful or it should be ignored');
   }
-  loaders.add(loader)
-  // loader should 
-}
+  loaders.add(loader);
+  // loader should
+};
 
 // helper to call built in's from typescript.
-export const callGlobalExtensionHandler = (module:Parent,filename:string,extension:string)=>{
-  let handlers = Module._extensions as {[extension:string]:(module:Parent,filename:string)=>void}
-  
-  if(!handlers[extension]){
-    // this should only be implementation error. the default is .js
-    throw new Error('global extension handler doesn\'t exist for ' + extension)  
+export const callGlobalExtensionHandler =
+    (module: Parent, filename: string, extension: string) => {
+      const handlers = Module._extensions as
+          {[extension: string]: (module: Parent, filename: string) => void};
+
+      if (!handlers[extension]) {
+        // this should only be implementation error. the default is .js
+        throw new Error(
+            'global extension handler doesn\'t exist for ' + extension);
+      }
+
+      handlers[extension](module, filename);
+    };
+
+
+module.exports.loaders = loaders;
+module.exports.fallback = true;
+
+// note: each loader which uses this will need to register itself and they may
+// depend on their own version of this. supporting multiple stacked versions of
+// this is a normal thing.
+
+Module._load = (request: string, parent: Parent, isMain: boolean) => {
+  // TODO:  if isMain i need to async init all the loaders.
+
+  // if internal we just pass directly to orig load.
+  if (builtInModules.has(request)) {
+    return originalLoad(request, parent, isMain);
   }
-
-  handlers[extension](module,filename);
-}
-
-
-module.exports.loaders = loaders
-module.exports.fallback = true
-
-//note: each loader which uses this will need to register itself and they may depend on their own version of this.
-//supporting multiple stacked versions of this is a normal thing.
-
-Module._load = (request:string, parent:Parent, isMain:boolean)=>{
-
-  // if isMain i need to init all the loaders.
-  // some may need to be
 
   if (parent) {
     debug('Module._load REQUEST %s parent: %s', request, parent.id);
   }
 
-  let filename,loader;
-  for(loader of loaders){
-    filename = loader.resolve(request,parent,isMain) as string
-    if(filename) break;
+  let filename, loader;
+  for (loader of loaders) {
+    filename = loader.resolve(request, parent, isMain) as string;
+    if (filename) break;
   }
 
-  if(!filename || !loader){
-    if(module.exports.fallback){
-      return originalLoad(request,parent,isMain)
+  if (!filename || !loader) {
+    if (exports.fallback) {
+      return originalLoad(request, parent, isMain);
     }
-    //TODO: use real node error.
-    throw new Error("failed to resolve "+request+' from '+parent.id)
+    // TODO: use real node error.
+    throw new Error('failed to resolve ' + request + ' from ' + parent.id);
   }
 
-  var cachedModule = Module._cache[filename];
+  const cachedModule = Module._cache[filename];
   if (cachedModule) {
     updateChildren(parent, cachedModule, true);
     return cachedModule.exports;
   }
 
-  if (NativeModule.nonInternalExists(filename)) {
-    debug('load native module %s', request);
-    return NativeModule.require(filename);
-  }
+  // if (NativeModule.nonInternalExists(filename)) {
+  //  debug('load native module %s', request);
+  //  return NativeModule.require(filename);
+  //}
 
   // Don't call updateChildren(), Module constructor already does.
-  var module = new Module(filename, parent);
+  const module = new Module(filename, parent);
 
   if (isMain) {
     process.mainModule = module;
@@ -108,26 +122,28 @@ Module._load = (request:string, parent:Parent, isMain:boolean)=>{
 
   Module._cache[filename] = module;
 
-  tryModuleLoad(loader,module, filename);
+  tryModuleLoad(loader, module, filename);
 
   return module.exports;
-}
+};
 
-function updateChildren(parent:Parent, child:Parent, scan:boolean) {
-  var children = parent && parent.children;
-  if (children && !(scan && children.includes(child)))
+function updateChildren(parent: Parent, child: Parent, scan: boolean) {
+  const children = parent && parent.children;
+  if (children && !(scan && children.includes(child))) {
     children.push(child);
+  }
 }
 
-function tryModuleLoad(loader:Loader,module:Parent, filename:string) {
-  var threw = true;
+function tryModuleLoad(loader: Loader, module: Parent, filename: string) {
+  let threw = true;
   try {
-    //note:  copied here from Module.prototype.load.
-    var extension = path.extname(filename) || '.js';
+    // note:  copied here from Module.prototype.load.
+    let extension = path.extname(filename) || '.js';
     if (!Module._extensions[extension]) extension = '.js';
 
-    // if your loader supports something like .coffee you'll just not use the extension passed in.
-    loader.compile(module,filename,extension)
+    // if your loader supports something like .coffee you'll just not use the
+    // extension passed in.
+    loader.compile(module, filename, extension);
 
     module.loaded = true;
 
@@ -136,17 +152,18 @@ function tryModuleLoad(loader:Loader,module:Parent, filename:string) {
     if (threw) {
       delete Module._cache[filename];
     }
-    //note: node core does not remove failed modules from parent.children
+    // note: node core does not remove failed modules from parent.children
   }
 }
 
-export interface Loader{
-    // when we're asked to load main
-    // we await all of the loader init's that exist.
-    // if a loader has an init, and is added after main has been run, we throw.
-    init?:()=>Promise<boolean>;
-    // return a string that maps to module given parent module.
-    resolve(request:string,parent?:Parent,isMain?:boolean):string|false;
-    // pass the module's actual pending module object and the filename.
-    compile(module:Parent,filename:string,extension:string):any;
+export interface Loader {
+  // when we're asked to load main
+  // we await all of the loader init's that exist.
+  // if a loader has an init, and is added after main has been run, we throw.
+  init?: () => Promise<boolean>;
+  // return a string that maps to module given parent module.
+  resolve(request: string, parent?: Parent, isMain?: boolean): string|false;
+  // pass the module's actual pending module object and the filename.
+  // tslint:disable-next-line:no-any
+  compile(module: Parent, filename: string, extension: string): any;
 }
