@@ -54,10 +54,10 @@ export class NodeModuleResolution {
     if (this.pathCache.has(cacheKey)) {
       return this.pathCache.get(cacheKey) || false;
     }
-    //console.log('NMR:req ',request)
+    // console.log('NMR:req ',request)
     let resolved: string|false = false;
     if (path.isAbsolute(request) || isRelative(request)) {
-      //console.log('NMR:relative',request)
+      // console.log('NMR:relative',request)
       const file = path.resolve(path.dirname(parent.id), request);
       resolved = this.loadAsFile(file);
       if (!resolved) resolved = this.loadAsDirectory(file);

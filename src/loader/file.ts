@@ -19,7 +19,7 @@ import {FileObject, NodeModuleResolution, Parent} from '../';
 import * as extendModule from '../extend-internal-module';
 
 // a drop in replacement for nodes existing built in cjs loader.
-console.log('USING FILE LOADER')
+
 const fsLookup = {
   has: (file: string): boolean => {
     let stat;
@@ -27,11 +27,11 @@ const fsLookup = {
       stat = fs.statSync(file);
     } catch (e) {
     }
-    //console.log('FL:has',file)
+    // console.log('FL:has',file)
     return stat ? stat.isFile() : false;
   },
   get: (file: string): FileObject | undefined => {
-    //console.log('FL:get',file)
+    // console.log('FL:get',file)
     if (!fs.existsSync(file)) return undefined;
     return new File(file);
   }
@@ -57,7 +57,7 @@ const nmr = new NodeModuleResolution(fsLookup);
 
 extendModule.register({
   resolve: (request, parent, isMain) => {
-    //console.log('FL:resolve',request,parent,isMain)
+    // console.log('FL:resolve',request,parent,isMain)
     return nmr.resolve(request, parent, isMain);
   },
   compile: (module: Parent, filename: string, extension: string) => {
