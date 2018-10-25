@@ -3,4 +3,4 @@
  */
 const assert = require('assert')
 
-assert.strictEqual(require('./c'),'b','linked directory loads requries in linked directory')
+assert.strictEqual(require('./c'),'b','linked directory loads requires in linked directory')

@@ -42,8 +42,8 @@ export class NodeModuleResolution {
 
   resolve(request: string, parent?: Parent, isMain?: boolean): string|false {
     if (!parent) {
-      // make fake parent!.
-      parent = {id: '.', paths: Module._nodeModulePaths(process.cwd())};
+      // make fake parent
+      parent = {id: '.', paths: Module._nodeModulePaths(path.dirname(request))};
     }
 
     // todo: _resolveFileName calls _findPath which caches items with all of
@@ -54,9 +54,10 @@ export class NodeModuleResolution {
     if (this.pathCache.has(cacheKey)) {
       return this.pathCache.get(cacheKey) || false;
     }
-
+    //console.log('NMR:req ',request)
     let resolved: string|false = false;
     if (path.isAbsolute(request) || isRelative(request)) {
+      //console.log('NMR:relative',request)
       const file = path.resolve(path.dirname(parent.id), request);
       resolved = this.loadAsFile(file);
       if (!resolved) resolved = this.loadAsDirectory(file);

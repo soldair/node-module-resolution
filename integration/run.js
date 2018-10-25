@@ -14,7 +14,10 @@ dirs.forEach((name,i)=>{
 
   console.log(i,'running',name)
   //todo add require loader
-  let out = spawnSync(process.execPath,[path.join(dir,'test.js')])
+  let out = spawnSync(process.execPath,[
+    //'--require',path.resolve(__dirname,'..','build','src','loader','file.js'),
+    path.join(dir,'test.js')
+  ])
   
   if(out.status || out.signal){
     failed[name] = out

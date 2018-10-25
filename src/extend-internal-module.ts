@@ -29,7 +29,6 @@ import {Parent} from './index';
 
 // tslint:disable-next-line
 const Module = require('module')
-// const {NativeModule } = require('internal/bootstrap/loaders');
 const debug = util.debuglog('nmr-extend');
 
 const EXTENDED_MODULE_LOADERS = Symbol.for('node-module-resolution-loaders');
@@ -107,17 +106,12 @@ Module._load = (request: string, parent: Parent, isMain: boolean) => {
     return cachedModule.exports;
   }
 
-  // if (NativeModule.nonInternalExists(filename)) {
-  //  debug('load native module %s', request);
-  //  return NativeModule.require(filename);
-  //}
-
   // Don't call updateChildren(), Module constructor already does.
   const module = new Module(filename, parent);
 
   if (isMain) {
     process.mainModule = module;
-    module.id = '.';
+    module.id = filename; /// i had this set to '.' for some reason and that broke relative requires
   }
 
   Module._cache[filename] = module;
