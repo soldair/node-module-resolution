@@ -111,9 +111,10 @@ Module._load = (request: string, parent: Parent, isMain: boolean) => {
 
   if (isMain) {
     process.mainModule = module;
-    module.id = filename;  /// i had this set to '.' for some reason and that
-                           /// broke relative requires
+    module.id = '.';
   }
+  module.filename = filename;
+  module.paths = Module._nodeModulePaths(path.dirname(filename));
 
   Module._cache[filename] = module;
 

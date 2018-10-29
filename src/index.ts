@@ -14,14 +14,15 @@
 
 // tslint:disable-next-line
 const Module = require('module');
-
 import * as path from 'path';
+import {hasTrailingSlash} from './from_node';
 
 export class NodeModuleResolution {
   fileMap: FileMap;
   pathCache: Map<string, string>;
   mainCache: Map<string, string|boolean>;
   extensions: string[];
+  options: NodeModuleResolutionOptions;
   // pathRoot: string;
 
   constructor(fileMap: FileMap, options?: NodeModuleResolutionOptions) {
@@ -38,14 +39,20 @@ export class NodeModuleResolution {
     this.extensions = Object.keys(Module._extensions);
     // never resolve paths outside of this root.
     // this.pathRoot = pathRoot;
+    this.options = options || {};
   }
 
   resolve(request: string, parent?: Parent, isMain?: boolean): string|false {
     if (!parent) {
       // make fake parent
-      parent = {id: '.', paths: Module._nodeModulePaths(path.dirname(request))};
+      parent = {
+        id: '.',
+        filename: path.dirname(request),
+        paths: Module._nodeModulePaths(path.dirname(request))
+      };
     }
 
+    isMain = isMain||false
     // todo: _resolveFileName calls _findPath which caches items with all of
     // their
     // search paths.
@@ -54,16 +61,19 @@ export class NodeModuleResolution {
     if (this.pathCache.has(cacheKey)) {
       return this.pathCache.get(cacheKey) || false;
     }
+
+    const trailingSlash = hasTrailingSlash(request);
     // console.log('NMR:req ',request)
     let resolved: string|false = false;
     if (path.isAbsolute(request) || isRelative(request)) {
       // console.log('NMR:relative',request)
+
       const file = path.resolve(path.dirname(parent.id), request);
-      resolved = this.loadAsFile(file);
-      if (!resolved) resolved = this.loadAsDirectory(file);
+      if (!trailingSlash) resolved = this.loadAsFile(file,isMain);
+      if (!resolved) resolved = this.loadAsDirectory(file,isMain);
 
     } else {
-      resolved = this.loadNodeModules(request, path.dirname(parent.id));
+      resolved = this.loadNodeModules(request, path.dirname(parent.id),isMain);
     }
 
     // todo: cache the misses
@@ -74,18 +84,19 @@ export class NodeModuleResolution {
     return resolved;
   }
 
-  loadAsFile(file: string, exactMatch = true) {
+  loadAsFile(file: string,isMain:boolean,exactMatch = true) {
+    // console.log("NMR: load_as_file",file)
     const map = this.fileMap;
     if (exactMatch && map.has(file)) {
-      return this.tryRealpath(file);
+      return this.tryRealpath(file,isMain);
     }
     for (let i = 0; i < this.extensions.length; ++i) {
       const ext = this.extensions[i] || '';
       if (map.has(file + ext)) {
-        const retPath = this.tryRealpath(file + ext);
+        const retPath = this.tryRealpath(file + ext,isMain);
         // this should never return false if map.has the key but we'll reserve
-        // the decision for the implementor. this goes back to the question
-        // about if i should support a realpath that doesn't throw.
+        // the decision for the implementor. this brings to question
+        // if i should support a realpath that doesn't throw.
         if (retPath) {
           return retPath;
         }
@@ -96,15 +107,17 @@ export class NodeModuleResolution {
 
   // load index will never load a file called 'index' otherwise its the same as
   // load file
-  loadAsIndex(file: string) {
+  loadAsIndex(file: string,isMain:boolean) {
+    // console.log("NMR: load_as_index",file)
     const map = this.fileMap;
     file = path.join(file, 'index');
-    return this.loadAsFile(file, false);
+    return this.loadAsFile(file, isMain,false);
   }
 
-  loadAsDirectory(requestPath: string) {
+  loadAsDirectory(requestPath: string,isMain:boolean) {
+    // console.log("NMR: load_as_directory",requestPath)
     // if this directory exists lets make sure we've found its realpath.
-    const resolvedPath = this.tryRealpath(requestPath);
+    const resolvedPath = this.tryRealpath(requestPath,isMain);
     if (resolvedPath) requestPath = resolvedPath;
 
     const jsonPath = path.join(requestPath, 'package.json');
@@ -124,9 +137,9 @@ export class NodeModuleResolution {
         // yes the main can really be outside the project
         const mainPath = path.resolve(requestPath, parsed.main);
 
-        let retPath = this.loadAsFile(mainPath);
+        let retPath = this.loadAsFile(mainPath,isMain);
         if (!retPath) {
-          retPath = this.loadAsIndex(mainPath);
+          retPath = this.loadAsIndex(mainPath,isMain);
         }
         if (retPath) {
           this.mainCache.set(jsonPath, retPath);
@@ -134,15 +147,19 @@ export class NodeModuleResolution {
         }
       }
     }
-    const asIndex = this.loadAsIndex(requestPath);
+    const asIndex = this.loadAsIndex(requestPath,isMain);
     this.mainCache.set(jsonPath, asIndex || false);
     return asIndex;
   }
 
-  tryRealpath(requestPath: string) {
+  tryRealpath(requestPath: string,isMain:boolean) {
     const entry = this.fileMap.get(requestPath);
+
     if (entry) {
-      if (entry.realpath) {
+      // if i can get a realpath.
+      // and i shouldn't preserve symlinks
+      let preserve = isMain?this.options.preserveSymLinksMain:this.options.preserveSymlinks;
+      if (entry.realpath  && !preserve) {
         const resolvedPath = entry.realpath(requestPath);
         // TODO: decide if it has a realpath function it must return a string or
         // throw?
@@ -153,7 +170,7 @@ export class NodeModuleResolution {
     return false;
   }
 
-  loadNodeModules(name: string, dir: string) {
+  loadNodeModules(name: string, dir: string,isMain:boolean) {
     const paths = NodeModuleResolution.nodeModulePaths(dir);
     for (let i = 0; i < paths.length; ++i) {
       // only scan for files under pathRoot
@@ -163,9 +180,9 @@ export class NodeModuleResolution {
 
       const file = path.join(paths[i], name);
       // support single file modules.
-      let retPath = this.loadAsFile(file);
+      let retPath = this.loadAsFile(file,isMain);
       if (retPath) return retPath;
-      retPath = this.loadAsDirectory(file);
+      retPath = this.loadAsDirectory(file,isMain);
       if (retPath) return retPath;
     }
     return false;

@@ -20,6 +20,8 @@ import * as extendModule from '../extend-internal-module';
 
 // a drop in replacement for nodes existing built in cjs loader.
 
+console.log('FL: loaded')
+
 const fsLookup = {
   has: (file: string): boolean => {
     let stat;
@@ -45,15 +47,20 @@ class File implements FileObject {
   }
 
   getData() {
+    // console.log('FL:getData',this.file)
     return fs.readFileSync(this.file);
   }
 
   realpath() {
+    // console.log('FL:realpath',this.file)
     return fs.realpathSync(this.file);
   }
 }
 
-const nmr = new NodeModuleResolution(fsLookup);
+const nmr = new NodeModuleResolution(fsLookup, {
+  preserveSymlinks: preserveSymlinks(),
+  preserveSymLinksMain: preserveSymlinksMain()
+});
 
 extendModule.register({
   resolve: (request, parent, isMain) => {
@@ -65,3 +72,11 @@ extendModule.register({
     extendModule.callGlobalExtensionHandler(module, filename, extension);
   }
 });
+
+function preserveSymlinks() {
+  return process.execArgv.indexOf('--preserve-symlinks') > -1;
+}
+
+function preserveSymlinksMain() {
+  return process.execArgv.indexOf('--preserve-symlinks-main') > -1;
+}

@@ -18,7 +18,7 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+const CHAR_FORWARD_SLASH = 47;  // "/"
 
 /**
  * Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
@@ -40,6 +40,14 @@ export const updateChildren =
       }
     };
 
+export const hasTrailingSlash = (request: string) => {
+  let trailingSlash = request.length > 0 &&
+      request.charCodeAt(request.length - 1) === CHAR_FORWARD_SLASH;
+  if (!trailingSlash) {
+    trailingSlash = /(?:^|\/)\.?\.$/.test(request);
+  }
+  return trailingSlash;
+};
 //
 // code below here is not from the node project
 //

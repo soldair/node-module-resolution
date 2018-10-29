@@ -4,7 +4,7 @@
   "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
   "main": "build/src/index.js",
   "scripts": {
-    "test": "npm run mocha && node integration/run.js",
+    "test": "npm run mocha && node --require ./build/src/loader/file.js integration/run.js",
     "mocha":"nyc -x 'build/test/*' mocha build/test",
     "check": "gts check",
     "clean": "gts clean",
