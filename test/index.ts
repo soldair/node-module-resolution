@@ -160,25 +160,6 @@ describe('node-module-resolution fails', () => {
   });
 });
 
-describe(
-    'node core: json-with-directory-name-module',
-    () => {
-        // fails if trailing slash detection is not working.
-
-    });
-
-describe(
-    'custom features',
-    () => {
-        // it('wont resolve anything out of specified "root"',()=>{
-        //})
-        /*
-          it('can avoid json parse if an object is returned from getData',
-          () => {
-
-          });*/
-    });
-
 describe('utilities', () => {
   it('find relative paths', () => {
     assert.ok(isRelative('./'));

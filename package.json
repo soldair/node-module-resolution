@@ -5,7 +5,7 @@
   "main": "build/src/index.js",
   "scripts": {
     "test": "npm run mocha && node --require ./build/src/loader/file.js integration/run.js",
-    "mocha":"nyc -x 'build/test/*' mocha build/test",
+    "mocha": "nyc -x 'build/test/*' mocha build/test",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",

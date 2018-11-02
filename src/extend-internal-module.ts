@@ -82,6 +82,14 @@ Module._load = (request: string, parent: Parent, isMain: boolean) => {
     return originalLoad(request, parent, isMain);
   }
 
+  if (request.indexOf('internal/') === 0) {
+    return originalLoad(request, parent, isMain);
+  }
+
+  if (path.extname(request) === '.mjs') {
+    return originalLoad(request, parent, isMain);
+  }
+
   if (parent) {
     debug('Module._load REQUEST %s parent: %s', request, parent.id);
   }

@@ -20,17 +20,21 @@ import * as extendModule from '../extend-internal-module';
 
 // a drop in replacement for nodes existing built in cjs loader.
 
-console.log('FL: loaded')
-
+// console.log('FL: loaded')
+const statCache: {[k: string]: boolean} = {};
 const fsLookup = {
   has: (file: string): boolean => {
     let stat;
+    // always absolute
+    if (statCache[file] !== undefined) return statCache[file];
+    // console.log('FL:has',file)
     try {
       stat = fs.statSync(file);
     } catch (e) {
     }
-    // console.log('FL:has',file)
-    return stat ? stat.isFile() : false;
+
+    statCache[file] = stat ? stat.isFile() : false;
+    return statCache[file];
   },
   get: (file: string): FileObject | undefined => {
     // console.log('FL:get',file)
@@ -43,6 +47,7 @@ class File implements FileObject {
   file: string;
 
   constructor(file: string) {
+    // console.log('FL:File:construct',file)
     this.file = file;
   }
 

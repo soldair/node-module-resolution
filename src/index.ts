@@ -52,7 +52,7 @@ export class NodeModuleResolution {
       };
     }
 
-    isMain = isMain||false
+    isMain = isMain || false;
     // todo: _resolveFileName calls _findPath which caches items with all of
     // their
     // search paths.
@@ -69,11 +69,11 @@ export class NodeModuleResolution {
       // console.log('NMR:relative',request)
 
       const file = path.resolve(path.dirname(parent.id), request);
-      if (!trailingSlash) resolved = this.loadAsFile(file,isMain);
-      if (!resolved) resolved = this.loadAsDirectory(file,isMain);
+      if (!trailingSlash) resolved = this.loadAsFile(file, isMain);
+      if (!resolved) resolved = this.loadAsDirectory(file, isMain);
 
     } else {
-      resolved = this.loadNodeModules(request, path.dirname(parent.id),isMain);
+      resolved = this.loadNodeModules(request, path.dirname(parent.id), isMain);
     }
 
     // todo: cache the misses
@@ -84,16 +84,16 @@ export class NodeModuleResolution {
     return resolved;
   }
 
-  loadAsFile(file: string,isMain:boolean,exactMatch = true) {
+  loadAsFile(file: string, isMain: boolean, exactMatch = true) {
     // console.log("NMR: load_as_file",file)
     const map = this.fileMap;
     if (exactMatch && map.has(file)) {
-      return this.tryRealpath(file,isMain);
+      return this.tryRealpath(file, isMain);
     }
     for (let i = 0; i < this.extensions.length; ++i) {
       const ext = this.extensions[i] || '';
       if (map.has(file + ext)) {
-        const retPath = this.tryRealpath(file + ext,isMain);
+        const retPath = this.tryRealpath(file + ext, isMain);
         // this should never return false if map.has the key but we'll reserve
         // the decision for the implementor. this brings to question
         // if i should support a realpath that doesn't throw.
@@ -107,17 +107,17 @@ export class NodeModuleResolution {
 
   // load index will never load a file called 'index' otherwise its the same as
   // load file
-  loadAsIndex(file: string,isMain:boolean) {
+  loadAsIndex(file: string, isMain: boolean) {
     // console.log("NMR: load_as_index",file)
     const map = this.fileMap;
     file = path.join(file, 'index');
-    return this.loadAsFile(file, isMain,false);
+    return this.loadAsFile(file, isMain, false);
   }
 
-  loadAsDirectory(requestPath: string,isMain:boolean) {
+  loadAsDirectory(requestPath: string, isMain: boolean) {
     // console.log("NMR: load_as_directory",requestPath)
     // if this directory exists lets make sure we've found its realpath.
-    const resolvedPath = this.tryRealpath(requestPath,isMain);
+    const resolvedPath = this.tryRealpath(requestPath, isMain);
     if (resolvedPath) requestPath = resolvedPath;
 
     const jsonPath = path.join(requestPath, 'package.json');
@@ -137,9 +137,9 @@ export class NodeModuleResolution {
         // yes the main can really be outside the project
         const mainPath = path.resolve(requestPath, parsed.main);
 
-        let retPath = this.loadAsFile(mainPath,isMain);
+        let retPath = this.loadAsFile(mainPath, isMain);
         if (!retPath) {
-          retPath = this.loadAsIndex(mainPath,isMain);
+          retPath = this.loadAsIndex(mainPath, isMain);
         }
         if (retPath) {
           this.mainCache.set(jsonPath, retPath);
@@ -147,19 +147,20 @@ export class NodeModuleResolution {
         }
       }
     }
-    const asIndex = this.loadAsIndex(requestPath,isMain);
+    const asIndex = this.loadAsIndex(requestPath, isMain);
     this.mainCache.set(jsonPath, asIndex || false);
     return asIndex;
   }
 
-  tryRealpath(requestPath: string,isMain:boolean) {
+  tryRealpath(requestPath: string, isMain: boolean) {
     const entry = this.fileMap.get(requestPath);
 
     if (entry) {
       // if i can get a realpath.
       // and i shouldn't preserve symlinks
-      let preserve = isMain?this.options.preserveSymLinksMain:this.options.preserveSymlinks;
-      if (entry.realpath  && !preserve) {
+      const preserve = isMain ? this.options.preserveSymLinksMain :
+                                this.options.preserveSymlinks;
+      if (entry.realpath && !preserve) {
         const resolvedPath = entry.realpath(requestPath);
         // TODO: decide if it has a realpath function it must return a string or
         // throw?
@@ -170,7 +171,7 @@ export class NodeModuleResolution {
     return false;
   }
 
-  loadNodeModules(name: string, dir: string,isMain:boolean) {
+  loadNodeModules(name: string, dir: string, isMain: boolean) {
     const paths = NodeModuleResolution.nodeModulePaths(dir);
     for (let i = 0; i < paths.length; ++i) {
       // only scan for files under pathRoot
@@ -180,9 +181,9 @@ export class NodeModuleResolution {
 
       const file = path.join(paths[i], name);
       // support single file modules.
-      let retPath = this.loadAsFile(file,isMain);
+      let retPath = this.loadAsFile(file, isMain);
       if (retPath) return retPath;
-      retPath = this.loadAsDirectory(file,isMain);
+      retPath = this.loadAsDirectory(file, isMain);
       if (retPath) return retPath;
     }
     return false;
