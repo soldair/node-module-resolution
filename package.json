@@ -1,6 +1,6 @@
 {
   "name": "node-module-resolution",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Use to make your own module loaders. A compliant node module loader base without any fs.",
   "main": "build/src/index.js",
   "scripts": {
