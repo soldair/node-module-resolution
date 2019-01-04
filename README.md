@@ -3,6 +3,8 @@ Use to make your own amazing module loaders.
 
 Implements the "spec" defined in the [node docs](https://nodejs.org/dist/latest-v10.x/docs/api/modules.html#modules_all_together)
 
+and passes node core's own tests!
+
 ```typescript
 import {NodeModuleResolution} from 'node-module-resolution'
 
@@ -19,7 +21,7 @@ console.log('should resolve seahorse by reading main. ',result)
 
 ## todo
 
-- make amazing test suite for this.
+- make more amazing test suite for this.
 - examples
 - everything else
 
