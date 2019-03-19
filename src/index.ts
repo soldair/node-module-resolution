@@ -16,6 +16,7 @@
 const Module = require('module');
 import * as path from 'path';
 import {hasTrailingSlash} from './from_node';
+import * as extendInternal from './extend-internal-module';
 
 export class NodeModuleResolution {
   fileMap: FileMap;
@@ -194,6 +195,9 @@ export class NodeModuleResolution {
     return Module._nodeModulePaths(dir);
   }
 }
+
+export const registerLoader = extendInternal.register;
+export const globalExtensionHandler = extendInternal.callGlobalExtensionHandler;
 
 export const isRelative = (filename: string) => {
   const DOT = '.';

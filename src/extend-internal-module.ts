@@ -33,9 +33,15 @@ const debug = util.debuglog('nmr-extend');
 
 const EXTENDED_MODULE_LOADERS = Symbol.for('node-module-resolution-loaders');
 
+/*
+let runMain = Module.runMain
+Module.runMain = function(){
+  return runMain.apply(this,arguments)
+}
+*/
+
 const originalLoad = Module._load;
 const loaders: Set<Loader> = new Set();
-
 
 const builtInModules =
     new Map(Module.builtinModules.map((s: string) => [s, 1]));
@@ -93,10 +99,11 @@ Module._load = (request: string, parent: Parent, isMain: boolean) => {
   if (parent) {
     debug('Module._load REQUEST %s parent: %s', request, parent.id);
   }
-
+  const resolveContext = {};
   let filename, loader;
   for (loader of loaders) {
-    filename = loader.resolve(request, parent, isMain) as string;
+    filename =
+        loader.resolve(request, parent, isMain, resolveContext) as string;
     if (filename) break;
   }
 
@@ -126,7 +133,7 @@ Module._load = (request: string, parent: Parent, isMain: boolean) => {
 
   Module._cache[filename] = module;
 
-  tryModuleLoad(loader, module, filename);
+  tryModuleLoad(loader, module, filename, resolveContext);
 
   return module.exports;
 };
@@ -138,16 +145,19 @@ function updateChildren(parent: Parent, child: Parent, scan: boolean) {
   }
 }
 
-function tryModuleLoad(loader: Loader, module: Parent, filename: string) {
+function tryModuleLoad(
+    loader: Loader, module: Parent, filename: string,
+    // tslint:disable-next-line:no-any
+    resolveContext: {[k: string]: any}) {
   let threw = true;
   try {
     // note:  copied here from Module.prototype.load.
     let extension = path.extname(filename) || '.js';
     if (!Module._extensions[extension]) extension = '.js';
 
-    // if your loader supports something like .coffee you'll just not use the
+    // if your loader supports something like .ts you'll just not use the
     // extension passed in.
-    loader.compile(module, filename, extension);
+    loader.compile(module, filename, extension, resolveContext);
 
     module.loaded = true;
 
@@ -166,8 +176,13 @@ export interface Loader {
   // if a loader has an init, and is added after main has been run, we throw.
   init?: () => Promise<boolean>;
   // return a string that maps to module given parent module.
-  resolve(request: string, parent?: Parent, isMain?: boolean): string|false;
+  resolve(
+      request: string, parent?: Parent, isMain?: boolean,
+      // tslint:disable-next-line:no-any
+      resolveContext?: {[k: string]: any}): string|false;
   // pass the module's actual pending module object and the filename.
-  // tslint:disable-next-line:no-any
-  compile(module: Parent, filename: string, extension: string): any;
+  compile(
+      module: Parent, filename: string, extension: string,
+      // tslint:disable-next-line:no-any
+      resolveContext?: {[k: string]: any}): any;
 }
