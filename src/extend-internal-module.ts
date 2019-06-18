@@ -176,13 +176,19 @@ export interface Loader {
   // if a loader has an init, and is added after main has been run, we throw.
   init?: () => Promise<boolean>;
   // return a string that maps to module given parent module.
-  resolve(
-      request: string, parent?: Parent, isMain?: boolean,
-      // tslint:disable-next-line:no-any
-      resolveContext?: {[k: string]: any}): string|false;
+  resolve: Resolver;
   // pass the module's actual pending module object and the filename.
-  compile(
-      module: Parent, filename: string, extension: string,
-      // tslint:disable-next-line:no-any
-      resolveContext?: {[k: string]: any}): any;
+  compile: Compiler;
 }
+
+// tslint:disable:no-any
+export interface Resolver {
+  (request: string, parent?: Parent, isMain?: boolean,
+   resolveContext?: {[k: string]: any}): string|false;
+}
+
+export interface Compiler {
+  (module: Parent, filename: string, extension: string,
+   resolveContext?: {[k: string]: any}): any;
+}
+// tslint:enable:no-any
